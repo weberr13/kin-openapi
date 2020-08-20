@@ -29,5 +29,6 @@ func TestResettingExternalRefs(t *testing.T) {
 		sr := doc.Components.Schemas["AnotherTestSchema"].Value.Properties[s]
 		require.True(t, sr.IsValue())
 		require.False(t, sr.Resolved())
+		require.False(t, sr.IsRef())
 	}
 }

@@ -512,6 +512,9 @@ func (swaggerLoader *SwaggerLoader) resolveRefSwagger(swagger *Swagger, ref stri
 			if swg2, err = swaggerLoader.loadSwaggerFromURIInternal(resolvedPath); err != nil {
 				return nil, "", nil, fmt.Errorf("Error while resolving reference '%s': %v", ref, err)
 			}
+			if swaggerLoader.ClearResolvedRefs {
+				ClearResolvedExternalRefs(swg2)
+			}
 			swaggerLoader.loadedRemoteSchemas[*parsedURL] = swg2
 		}
 
