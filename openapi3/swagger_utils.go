@@ -2,6 +2,7 @@ package openapi3
 
 import (
 	"fmt"
+	"hash/fnv"
 	"reflect"
 	"strings"
 )
@@ -100,11 +101,14 @@ func setRef(c reflect.Value, refMap map[interface{}]string) {
 		return
 	}
 
-	p, ok := refMap[sr]
-	if ok && p != sr.Metadata.Path.Fragment {
-		fmt.Printf("Found schema ref in the map with different paths: %s: (%s, %s)\n", sr.Metadata.ID, p, sr.Metadata.Path.Fragment)
-	}
-	if !ok {
+	if _, ok := refMap[sr]; !ok {
+		s := fnv.New64a()
+		_, _ = s.Write([]byte(sr.Metadata.Path.Host + sr.Metadata.Path.Path))
+		sfx := "_" + fmt.Sprintf("%x", s.Sum64())
+
+		sr.Metadata.Path.Fragment += sfx
+		sr.Metadata.ID += sfx
+
 		refMap[sr] = "#" + sr.Metadata.Path.Fragment
 	}
 

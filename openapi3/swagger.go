@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
@@ -46,8 +45,9 @@ func (swagger *Swagger) FixRefsAndMarshalJSON() ([]byte, error) {
 	sm := swagger.Components.Schemas
 	swagger.Components.Schemas = map[string]*SchemaRef{}
 	for k := range m {
-		if sp, ok := k.(*Schema); ok {
-			swagger.Components.Schemas[sp.ID] = &SchemaRef{Value: sp}
+		switch t := k.(type) {
+		case *Schema:
+			swagger.Components.Schemas[t.ID] = &SchemaRef{Value: t}
 		}
 	}
 

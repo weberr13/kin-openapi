@@ -6,11 +6,22 @@ info:
 paths: { }
 components:
   schemas:
-    AnotherTestSchema:
+    SchemaReferringToExtNameSchema:
       type: object
       properties:
         remoteName:
           "$ref": components.openapi.yml#/components/schemas/Name
+    SchemaReferringToExtNameSchemaFromFile2:
+      type: object
+      properties:
+        remoteName:
+          "$ref": components.openapi.name.yml#/components/schemas/Name
+
+    SchemaReferringToExtNameSchemaFromHTTP:
+      type: object
+      properties:
+        remoteName:
+          "$ref": http://localhost:7965/components.openapi.name.yml#/components/schemas/Name
     Inline2:
       type: object
       properties:
