@@ -3,7 +3,6 @@ package openapi3
 import (
 	"context"
 	"errors"
-	"math"
 	"net/url"
 	"strings"
 )
@@ -36,9 +35,9 @@ func (servers Servers) MatchURL(parsedURL *url.URL) (*Server, []string, string) 
 
 // Server is specified by OpenAPI/Swagger standard version 3.0.
 type Server struct {
-	URL         string                     `json:"url" yaml:"url"`
-	Description string                     `json:"description,omitempty" yaml:"description,omitempty"`
-	Variables   map[string]*ServerVariable `json:"variables,omitempty" yaml:"variables,omitempty"`
+	URL         string                     `json:"url,omitempty"`
+	Description string                     `json:"description,omitempty"`
+	Variables   map[string]*ServerVariable `json:"variables,omitempty"`
 }
 
 func (server Server) ParameterNames() ([]string, error) {
@@ -76,20 +75,8 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 			}
 			pattern = pattern[i+1:]
 
-			// Find next matching pattern character or next '/' whichever comes first
-			np := -1
-			if len(pattern) > 0 {
-				np = strings.IndexByte(input, pattern[0])
-			}
-			ns := strings.IndexByte(input, '/')
-
-			if np < 0 {
-				i = ns
-			} else if ns < 0 {
-				i = np
-			} else {
-				i = int(math.Min(float64(np), float64(ns)))
-			}
+			// Find next '.' or '/'
+			i = strings.IndexAny(input, "./")
 			if i < 0 {
 				i = len(input)
 			}
@@ -113,9 +100,6 @@ func (server Server) MatchRawURL(input string) ([]string, string, bool) {
 }
 
 func (server *Server) Validate(c context.Context) (err error) {
-	if server.URL == "" {
-		return errors.New("value of url must be a non-empty JSON string")
-	}
 	for _, v := range server.Variables {
 		if err = v.Validate(c); err != nil {
 			return
@@ -126,16 +110,16 @@ func (server *Server) Validate(c context.Context) (err error) {
 
 // ServerVariable is specified by OpenAPI/Swagger standard version 3.0.
 type ServerVariable struct {
-	Enum        []interface{} `json:"enum,omitempty" yaml:"enum,omitempty"`
-	Default     interface{}   `json:"default,omitempty" yaml:"default,omitempty"`
-	Description string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Enum        []interface{} `json:"enum,omitempty"`
+	Default     interface{}   `json:"default,omitempty"`
+	Description string        `json:"description,omitempty"`
 }
 
 func (serverVariable *ServerVariable) Validate(c context.Context) error {
 	switch serverVariable.Default.(type) {
 	case float64, string:
 	default:
-		return errors.New("value of default must be either JSON number or JSON string")
+		return errors.New("Variable 'default' must be either JSON number or JSON string")
 	}
 	for _, item := range serverVariable.Enum {
 		switch item.(type) {

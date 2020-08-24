@@ -2,7 +2,6 @@ package openapi3
 
 import (
 	"context"
-	"errors"
 	"strconv"
 
 	"github.com/getkin/kin-openapi/jsoninfo"
@@ -14,38 +13,36 @@ type Operation struct {
 	ExtensionProps
 
 	// Optional tags for documentation.
-	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 
 	// Optional short summary.
-	Summary string `json:"summary,omitempty" yaml:"summary,omitempty"`
+	Summary string `json:"summary,omitempty"`
 
 	// Optional description. Should use CommonMark syntax.
-	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 
 	// Optional operation ID.
-	OperationID string `json:"operationId,omitempty" yaml:"operationId,omitempty"`
+	OperationID string `json:"operationId,omitempty"`
 
 	// Optional parameters.
-	Parameters Parameters `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Parameters Parameters `json:"parameters,omitempty"`
 
 	// Optional body parameter.
-	RequestBody *RequestBodyRef `json:"requestBody,omitempty" yaml:"requestBody,omitempty"`
+	RequestBody *RequestBodyRef `json:"requestBody,omitempty"`
 
-	// Responses.
-	Responses Responses `json:"responses" yaml:"responses"` // Required
+	// Optional responses.
+	Responses Responses `json:"responses,omitempty"`
 
 	// Optional callbacks
-	Callbacks map[string]*CallbackRef `json:"callbacks,omitempty" yaml:"callbacks,omitempty"`
+	Callbacks map[string]*CallbackRef `json:"callbacks,omitempty"`
 
-	Deprecated bool `json:"deprecated,omitempty" yaml:"deprecated,omitempty"`
+	Deprecated bool `json:"deprecated,omitempty"`
 
 	// Optional security requirements that overrides top-level security.
-	Security *SecurityRequirements `json:"security,omitempty" yaml:"security,omitempty"`
+	Security *SecurityRequirements `json:"security,omitempty"`
 
 	// Optional servers that overrides top-level servers.
-	Servers *Servers `json:"servers,omitempty" yaml:"servers,omitempty"`
-
-	ExternalDocs *ExternalDocs `json:"externalDocs,omitempty" yaml:"externalDocs,omitempty"`
+	Servers *Servers `json:"servers,omitempty"`
 }
 
 func NewOperation() *Operation {
@@ -72,12 +69,14 @@ func (operation *Operation) AddResponse(status int, response *Response) {
 		responses = NewResponses()
 		operation.Responses = responses
 	}
-	code := "default"
-	if status != 0 {
-		code = strconv.FormatInt(int64(status), 10)
-	}
-	responses[code] = &ResponseRef{
-		Value: response,
+	if status == 0 {
+		responses["default"] = &ResponseRef{
+			Value: response,
+		}
+	} else {
+		responses[strconv.FormatInt(int64(status), 10)] = &ResponseRef{
+			Value: response,
+		}
 	}
 }
 
@@ -96,8 +95,6 @@ func (operation *Operation) Validate(c context.Context) error {
 		if err := v.Validate(c); err != nil {
 			return err
 		}
-	} else {
-		return errors.New("value of responses must be a JSON object")
 	}
 	return nil
 }

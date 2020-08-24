@@ -46,11 +46,6 @@ func TestFilter(t *testing.T) {
 
 	// Declare router
 	swagger := &openapi3.Swagger{
-		OpenAPI: "3.0.0",
-		Info: &openapi3.Info{
-			Title:   "MyAPI",
-			Version: "0.1",
-		},
 		Servers: openapi3.Servers{
 			{
 				URL: "http://example.com/api/",
@@ -76,48 +71,6 @@ func TestFilter(t *testing.T) {
 						},
 						{
 							Value: &openapi3.Parameter{
-								In:   "query",
-								Name: "queryArgAnyOf",
-								Schema: openapi3.NewAnyOfSchema(
-									openapi3.NewStringSchema().WithMaxLength(2),
-									openapi3.NewDateTimeSchema(),
-								).NewRef(),
-							},
-						},
-						{
-							Value: &openapi3.Parameter{
-								In:   "query",
-								Name: "queryArgOneOf",
-								Schema: openapi3.NewOneOfSchema(
-									openapi3.NewStringSchema().WithMaxLength(2),
-									openapi3.NewInt32Schema(),
-								).NewRef(),
-							},
-						},
-						{
-							Value: &openapi3.Parameter{
-								In:   "query",
-								Name: "queryArgAllOf",
-								Schema: openapi3.NewAllOfSchema(
-									openapi3.NewDateTimeSchema(),
-									openapi3.NewStringSchema(),
-								).NewRef(),
-							},
-						},
-						// TODO(decode not): handle decoding "not" JSON Schema
-						// {
-						// 	Value: &openapi3.Parameter{
-						// 		In:   "query",
-						// 		Name: "queryArgNot",
-						// 		Schema: &openapi3.SchemaRef{
-						// 			Value: &openapi3.Schema{
-						// 				Not: &openapi3.SchemaRef{
-						// 					Value: openapi3.NewInt32Schema(),
-						// 				}}},
-						// 	},
-						// },
-						{
-							Value: &openapi3.Parameter{
 								In:      "query",
 								Name:    "contentArg",
 								Content: openapi3.NewContentWithJSONSchema(complexArgSchema),
@@ -131,23 +84,6 @@ func TestFilter(t *testing.T) {
 									"application/something_funny": openapi3.NewMediaType().WithSchema(complexArgSchema),
 								},
 							},
-						},
-					},
-					Responses: openapi3.NewResponses(),
-				},
-			},
-
-			"/issue151": &openapi3.PathItem{
-				Get: &openapi3.Operation{
-					Responses: openapi3.NewResponses(),
-				},
-				Parameters: openapi3.Parameters{
-					{
-						Value: &openapi3.Parameter{
-							In:       "query",
-							Name:     "par1",
-							Required: true,
-							Schema:   openapi3.NewIntegerSchema().NewRef(),
 						},
 					},
 				},
@@ -201,16 +137,15 @@ func TestFilter(t *testing.T) {
 	var err error
 	var req ExampleRequest
 	var resp ExampleResponse
-	resp = ExampleResponse{
-		Status: 200,
-	}
-	// Test paths
 
+	// Test paths
 	req = ExampleRequest{
 		Method: "POST",
 		URL:    "http://example.com/api/prefix/v/suffix",
 	}
-
+	resp = ExampleResponse{
+		Status: 200,
+	}
 	err = expect(req, resp)
 	require.NoError(t, err)
 
@@ -237,71 +172,13 @@ func TestFilter(t *testing.T) {
 	err = expect(req, resp)
 	require.IsType(t, &openapi3filter.RequestError{}, err)
 
-	req = ExampleRequest{
-		Method: "GET",
-		URL:    "http://example.com/api/issue151?par2=par1_is_missing",
-	}
-	err = expect(req, resp)
-	require.IsType(t, &openapi3filter.RequestError{}, err)
-
 	// Test query parameter openapi3filter
 	req = ExampleRequest{
 		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=ae&queryArgOneOf=ac&queryArgAllOf=2017-12-31T11:59:59",
+		URL:    "http://example.com/api/prefix/v/suffix?queryArg=a",
 	}
 	err = expect(req, resp)
 	require.NoError(t, err)
-
-	req = ExampleRequest{
-		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=2017-12-31T11:59:59",
-	}
-	err = expect(req, resp)
-	require.NoError(t, err)
-
-	req = ExampleRequest{
-		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgAnyOf=123",
-	}
-	err = expect(req, resp)
-	require.IsType(t, &openapi3filter.RequestError{}, err)
-
-	req = ExampleRequest{
-		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=567",
-	}
-	err = expect(req, resp)
-	require.IsType(t, &openapi3filter.RequestError{}, err)
-
-	req = ExampleRequest{
-		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgOneOf=2017-12-31T11:59:59",
-	}
-	err = expect(req, resp)
-	require.IsType(t, &openapi3filter.RequestError{}, err)
-
-	req = ExampleRequest{
-		Method: "POST",
-		URL:    "http://example.com/api/prefix/v/suffix?queryArgAllOf=abdfg",
-	}
-	err = expect(req, resp)
-	require.IsType(t, &openapi3filter.RequestError{}, err)
-
-	// TODO(decode not): handle decoding "not" JSON Schema
-	// req = ExampleRequest{
-	// 	Method: "POST",
-	// 	URL:    "http://example.com/api/prefix/v/suffix?queryArgNot=abdfg",
-	// }
-	// err = expect(req, resp)
-	// require.IsType(t, &openapi3filter.RequestError{}, err)
-
-	// TODO(decode not): handle decoding "not" JSON Schema
-	// req = ExampleRequest{
-	// 	Method: "POST",
-	// 	URL:    "http://example.com/api/prefix/v/suffix?queryArgNot=123",
-	// }
-	// err = expect(req, resp)
-	// require.IsType(t, &openapi3filter.RequestError{}, err)
 
 	req = ExampleRequest{
 		Method: "POST",
@@ -530,11 +407,6 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 
 	// Create the swagger
 	swagger := &openapi3.Swagger{
-		OpenAPI: "3.0.0",
-		Info: &openapi3.Info{
-			Title:   "MyAPI",
-			Version: "0.1",
-		},
 		Paths: map[string]*openapi3.PathItem{},
 		Security: openapi3.SecurityRequirements{
 			{
@@ -557,16 +429,20 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 	for _, tc := range tc {
 		var securityRequirements *openapi3.SecurityRequirements = nil
 		if tc.schemes != nil {
-			tempS := openapi3.NewSecurityRequirements()
+			tempS := make(openapi3.SecurityRequirements, 0)
 			for _, scheme := range *tc.schemes {
-				tempS.With(openapi3.SecurityRequirement{scheme.Name: {}})
+				tempS = append(
+					tempS,
+					openapi3.SecurityRequirement{
+						scheme.Name: {},
+					},
+				)
 			}
-			securityRequirements = tempS
+			securityRequirements = &tempS
 		}
 		swagger.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
-				Security:  securityRequirements,
-				Responses: openapi3.NewResponses(),
+				Security: securityRequirements,
 			},
 		}
 	}
@@ -588,9 +464,9 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 
 		// Create the request
 		emptyBody := bytes.NewReader(make([]byte, 0))
-		pathURL, err := url.Parse(path.name)
+		pathUrl, err := url.Parse(path.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, pathURL)
+		route, _, err := router.FindRoute(http.MethodGet, pathUrl)
 		require.NoError(t, err)
 		req := openapi3filter.RequestValidationInput{
 			Request: httptest.NewRequest(http.MethodGet, path.name, emptyBody),
@@ -600,7 +476,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 					if schemesValidated != nil {
 						if validated, ok := (*schemesValidated)[input.SecurityScheme]; ok {
 							if validated {
-								t.Fatalf("The path %q had the schemes %v named %q validated more than once",
+								t.Fatalf("The path \"%s\" had the schemes %v named \"%s\" validated more than once",
 									path.name, input.SecurityScheme, input.SecuritySchemeName)
 							}
 							(*schemesValidated)[input.SecurityScheme] = true
@@ -608,7 +484,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 						}
 					}
 
-					t.Fatalf("The path %q had the schemes %v named %q",
+					t.Fatalf("The path \"%s\" had the schemes %v named \"%s\"",
 						path.name, input.SecurityScheme, input.SecuritySchemeName)
 
 					return nil
@@ -617,7 +493,7 @@ func TestOperationOrSwaggerSecurity(t *testing.T) {
 		}
 
 		// Validate the request
-		err = openapi3filter.ValidateRequest(context.TODO(), &req)
+		err = openapi3filter.ValidateRequest(nil, &req)
 		require.NoError(t, err)
 
 		for securityRequirement, validated := range *schemesValidated {
@@ -664,11 +540,6 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 	// Create the swagger
 	swagger := openapi3.Swagger{
-		OpenAPI: "3.0.0",
-		Info: &openapi3.Info{
-			Title:   "MyAPI",
-			Version: "0.1",
-		},
 		Paths: map[string]*openapi3.PathItem{},
 		Components: openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
@@ -688,16 +559,17 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 	// Add the paths to the swagger
 	for _, tc := range tc {
 		// Create the security requirements from the test cases's schemes
-		securityRequirements := openapi3.NewSecurityRequirements()
-		for _, scheme := range tc.schemes {
-			securityRequirements.With(openapi3.SecurityRequirement{scheme: {}})
+		securityRequirements := make(openapi3.SecurityRequirements, len(tc.schemes))
+		for i, scheme := range tc.schemes {
+			securityRequirements[i] = openapi3.SecurityRequirement{
+				scheme: {},
+			}
 		}
 
 		// Create the path with the security requirements
 		swagger.Paths[tc.name] = &openapi3.PathItem{
 			Get: &openapi3.Operation{
-				Security:  securityRequirements,
-				Responses: openapi3.NewResponses(),
+				Security: &securityRequirements,
 			},
 		}
 	}
@@ -710,9 +582,9 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 
 	for _, tc := range tc {
 		// Create the request input for the path
-		tcURL, err := url.Parse(tc.name)
+		tcUrl, err := url.Parse(tc.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, tcURL)
+		route, _, err := router.FindRoute(http.MethodGet, tcUrl)
 		require.NoError(t, err)
 		req := openapi3filter.RequestValidationInput{
 			Route: route,
@@ -722,13 +594,13 @@ func TestAnySecurityRequirementMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = openapi3filter.ValidateSecurityRequirements(context.TODO(), &req, *route.Operation.Security)
+		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {
-			require.Errorf(t, err, "an error is expected for path %q", tc.name)
+			require.Errorf(t, err, "an error is expected for path \"%s\"", tc.name)
 		} else {
-			require.NoErrorf(t, err, "an error wasn't expected for path %q", tc.name)
+			require.NoErrorf(t, err, "an error wasn't expected for path \"%s\"", tc.name)
 		}
 	}
 }
@@ -759,11 +631,6 @@ func TestAllSchemesMet(t *testing.T) {
 
 	// Create the swagger
 	swagger := openapi3.Swagger{
-		OpenAPI: "3.0.0",
-		Info: &openapi3.Info{
-			Title:   "MyAPI",
-			Version: "0.1",
-		},
 		Paths: map[string]*openapi3.PathItem{},
 		Components: openapi3.Components{
 			SecuritySchemes: map[string]*openapi3.SecuritySchemeRef{},
@@ -797,7 +664,6 @@ func TestAllSchemesMet(t *testing.T) {
 				Security: &openapi3.SecurityRequirements{
 					securityRequirement,
 				},
-				Responses: openapi3.NewResponses(),
 			},
 		}
 	}
@@ -810,9 +676,9 @@ func TestAllSchemesMet(t *testing.T) {
 
 	for _, tc := range tc {
 		// Create the request input for the path
-		tcURL, err := url.Parse(tc.name)
+		tcUrl, err := url.Parse(tc.name)
 		require.NoError(t, err)
-		route, _, err := router.FindRoute(http.MethodGet, tcURL)
+		route, _, err := router.FindRoute(http.MethodGet, tcUrl)
 		require.NoError(t, err)
 		req := openapi3filter.RequestValidationInput{
 			Route: route,
@@ -822,7 +688,7 @@ func TestAllSchemesMet(t *testing.T) {
 		}
 
 		// Validate the security requirements
-		err = openapi3filter.ValidateSecurityRequirements(context.TODO(), &req, *route.Operation.Security)
+		err = openapi3filter.ValidateSecurityRequirements(nil, &req, *route.Operation.Security)
 
 		// If there should have been an error
 		if tc.error {
@@ -847,9 +713,10 @@ func makeAuthFunc(schemes map[string]bool) func(c context.Context, input *openap
 		// If the scheme is present in che schemes
 		if present {
 			// Return an unmet scheme error
-			return fmt.Errorf("security scheme for %q wasn't met", input.SecuritySchemeName)
+			return fmt.Errorf("security scheme for \"%s\" wasn't met", input.SecuritySchemeName)
+		} else {
+			// Return an unknown scheme error
+			return fmt.Errorf("security scheme for \"%s\" is unknown", input.SecuritySchemeName)
 		}
-		// Return an unknown scheme error
-		return fmt.Errorf("security scheme for %q is unknown", input.SecuritySchemeName)
 	}
 }

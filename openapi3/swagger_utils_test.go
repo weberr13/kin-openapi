@@ -24,8 +24,7 @@ func TestResettingExternalRefs(t *testing.T) {
 
 	openapi3.ClearResolvedExternalRefs(doc)
 
-	fields := []string{"ref1", "ref2", "ref3", "ref4", "ref5", "ref6", "ref7", "ref8", "ref9"}
-	for _, s := range fields {
+	for _, s := range []string{"ref1", "ref2", "ref3", "ref4", "ref5", "ref6"} {
 		sr := doc.Components.Schemas["AnotherTestSchema"].Value.Properties[s]
 		require.True(t, sr.IsValue())
 		require.False(t, sr.Resolved())
