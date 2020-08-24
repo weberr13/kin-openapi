@@ -7,7 +7,7 @@ import (
 // ExtensionProps provides support for OpenAPI extensions.
 // It reads/writes all properties that begin with "x-".
 type ExtensionProps struct {
-	Extensions map[string]interface{} `json:"-" yaml:"-"`
+	Extensions map[string]interface{} `json:"-"`
 }
 
 // Assert that the type implements the interface
@@ -25,14 +25,13 @@ func (props *ExtensionProps) EncodeWith(encoder *jsoninfo.ObjectEncoder, value i
 
 // DecodeWith will be invoked by package "jsoninfo"
 func (props *ExtensionProps) DecodeWith(decoder *jsoninfo.ObjectDecoder, value interface{}) error {
-	if err := decoder.DecodeStructFieldsAndExtensions(value); err != nil {
-		return err
-	}
 	source := decoder.DecodeExtensionMap()
-	result := make(map[string]interface{}, len(source))
-	for k, v := range source {
-		result[k] = v
+	if len(source) > 0 {
+		result := make(map[string]interface{}, len(source))
+		for k, v := range source {
+			result[k] = v
+		}
+		props.Extensions = result
 	}
-	props.Extensions = result
-	return nil
+	return decoder.DecodeStructFieldsAndExtensions(value)
 }

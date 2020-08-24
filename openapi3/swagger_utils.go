@@ -25,15 +25,10 @@ func clearResolvedExternalRef(rr RefOrValue) {
 // ClearResolvedExternalRefs Recursively iterate over the swagger structure, resetting <Type>Ref structs where
 // the reference is remote and was resolved
 func ClearResolvedExternalRefs(swagger *Swagger) {
-	visited := map[reflect.Value]struct{}{}
-	resetExternalRef(reflect.ValueOf(swagger), visited)
+	resetExternalRef(reflect.ValueOf(swagger))
 }
 
-func resetExternalRef(c reflect.Value, visited map[reflect.Value]struct{}) {
-	if _, ok := visited[c]; ok {
-		return
-	}
-	visited[c] = struct{}{}
+func resetExternalRef(c reflect.Value) {
 	switch c.Kind() {
 	// If it is a struct, check if it's the desired type first before drilling into fields
 	// Further if this is a <Type>Ref struct, reset the reference if it's remote and resolved
@@ -44,28 +39,28 @@ func resetExternalRef(c reflect.Value, visited map[reflect.Value]struct{}) {
 				clearResolvedExternalRef(rov)
 			}
 		}
-		for i := 0; i < c.NumField(); i++ {
-			resetExternalRef(c.Field(i), visited)
+		for i := 0; i < c.NumField(); i += 1 {
+			resetExternalRef(c.Field(i))
 		}
 
 	// If it is a pointer or interface we need to unwrap and call once again
 	case reflect.Interface, reflect.Ptr:
 		c2 := c.Elem()
 		if c2.IsValid() {
-			resetExternalRef(c2, visited)
+			resetExternalRef(c2)
 		}
 
 	// If it is a slice we iterate over each each element
 	case reflect.Slice:
-		for i := 0; i < c.Len(); i++ {
-			resetExternalRef(c.Index(i), visited)
+		for i := 0; i < c.Len(); i += 1 {
+			resetExternalRef(c.Index(i))
 		}
 
 	// If it is a map we iterate over each of the key,value pairs
 	case reflect.Map:
 		mi := c.MapRange()
 		for mi.Next() {
-			resetExternalRef(mi.Value(), visited)
+			resetExternalRef(mi.Value())
 		}
 
 	// And everything else will simply be ignored

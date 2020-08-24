@@ -267,10 +267,15 @@ func (currentNode *Node) Match(path string) (*Node, []string) {
 		path = path[:len(path)-1]
 	}
 	variableValues := make([]string, 0, 8)
-	return currentNode.matchRemaining(path, variableValues)
+	return currentNode.matchRemaining(path, false, variableValues)
 }
 
-func (currentNode *Node) matchRemaining(remaining string, paramValues []string) (*Node, []string) {
+func (currentNode *Node) matchRemaining(remaining string, hasExtraSlash bool, paramValues []string) (*Node, []string) {
+	// Remove "/" from the beginning
+	// if len(remaining) > 0 && remaining[0] == '/' {
+	// 	remaining = remaining[1:]
+	// }
+
 	// Check if this node matches
 	if len(remaining) == 0 && currentNode.Value != nil {
 		return currentNode, paramValues
@@ -285,9 +290,9 @@ func (currentNode *Node) matchRemaining(remaining string, paramValues []string) 
 			pattern := suffix.Pattern
 			if strings.HasPrefix(remaining, pattern) {
 				newRemaining := remaining[len(pattern):]
-				resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, paramValues)
+				resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, hasExtraSlash, paramValues)
 			} else if len(remaining) == 0 && pattern == "/" {
-				resultNode, resultValues = suffix.Node.matchRemaining(remaining, paramValues)
+				resultNode, resultValues = suffix.Node.matchRemaining(remaining, hasExtraSlash, paramValues)
 			}
 		case SuffixKindVariable:
 			i := strings.IndexByte(remaining, '/')
@@ -296,7 +301,7 @@ func (currentNode *Node) matchRemaining(remaining string, paramValues []string) 
 			}
 			newParamValues := append(paramValues, remaining[:i])
 			newRemaining := remaining[i:]
-			resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, newParamValues)
+			resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, hasExtraSlash, newParamValues)
 		case SuffixKindEverything:
 			newParamValues := append(paramValues, remaining)
 			resultNode, resultValues = suffix.Node, newParamValues
@@ -314,7 +319,7 @@ func (currentNode *Node) matchRemaining(remaining string, paramValues []string) 
 				}
 				newParamValues := append(paramValues, paramValue)
 				newRemaining := remaining[i:]
-				resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, newParamValues)
+				resultNode, resultValues = suffix.Node.matchRemaining(newRemaining, hasExtraSlash, newParamValues)
 			}
 		}
 		if resultNode != nil && resultNode.Value != nil {
