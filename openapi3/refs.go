@@ -7,6 +7,10 @@ import (
 	"github.com/getkin/kin-openapi/jsoninfo"
 )
 
+func marshalRef(v interface{}, r string) ([]byte, error) {
+	return jsoninfo.MarshalRef(r, v)
+}
+
 type CallbackRef struct {
 	Ref   string
 	Value *Callback
@@ -17,7 +21,7 @@ func (value CallbackRef) String() string {
 }
 
 func (value *CallbackRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *CallbackRef) UnmarshalJSON(data []byte) error {
@@ -50,7 +54,7 @@ func (value ExampleRef) GetRef() string { return value.Ref }
 func (value *ExampleRef) ClearRef()     { value.Ref = "" }
 
 func (value *ExampleRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *ExampleRef) UnmarshalJSON(data []byte) error {
@@ -79,7 +83,7 @@ func (value HeaderRef) GetRef() string { return value.Ref }
 func (value *HeaderRef) ClearRef()     { value.Ref = "" }
 
 func (value *HeaderRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *HeaderRef) UnmarshalJSON(data []byte) error {
@@ -112,7 +116,7 @@ func (value LinkRef) GetRef() string { return value.Ref }
 func (value *LinkRef) ClearRef()     { value.Ref = "" }
 
 func (value *LinkRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *LinkRef) UnmarshalJSON(data []byte) error {
@@ -145,7 +149,7 @@ func (value ParameterRef) GetRef() string { return value.Ref }
 func (value *ParameterRef) ClearRef()     { value.Ref = "" }
 
 func (value *ParameterRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *ParameterRef) UnmarshalJSON(data []byte) error {
@@ -178,7 +182,7 @@ func (value ResponseRef) GetRef() string { return value.Ref }
 func (value *ResponseRef) ClearRef()     { value.Ref = "" }
 
 func (value *ResponseRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *ResponseRef) UnmarshalJSON(data []byte) error {
@@ -211,7 +215,7 @@ func (value RequestBodyRef) GetRef() string { return value.Ref }
 func (value *RequestBodyRef) ClearRef()     { value.Ref = "" }
 
 func (value *RequestBodyRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *RequestBodyRef) UnmarshalJSON(data []byte) error {
@@ -251,7 +255,7 @@ func NewSchemaRef(ref string, value *Schema) *SchemaRef {
 }
 
 func (value *SchemaRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *SchemaRef) UnmarshalJSON(data []byte) error {
@@ -284,7 +288,7 @@ func (value SecuritySchemeRef) GetRef() string { return value.Ref }
 func (value *SecuritySchemeRef) ClearRef()     { value.Ref = "" }
 
 func (value *SecuritySchemeRef) MarshalJSON() ([]byte, error) {
-	return jsoninfo.MarshalRef(value.Ref, value.Value)
+	return marshalRef(value.Value, value.Ref)
 }
 
 func (value *SecuritySchemeRef) UnmarshalJSON(data []byte) error {

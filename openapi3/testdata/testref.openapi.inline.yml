@@ -1,0 +1,45 @@
+---
+openapi: 3.0.0
+info:
+  title: 'OAI Specification w/ refs in YAML'
+  version: '1'
+paths: { }
+components:
+  schemas:
+    SchemaReferringToExtNameSchema:
+      type: object
+      properties:
+        remoteName:
+          "$ref": components.openapi.yml#/components/schemas/Name
+    SchemaReferringToExtNameSchemaFromFile2:
+      type: object
+      properties:
+        remoteName:
+          "$ref": components.openapi.name.yml#/components/schemas/Name
+
+    SchemaReferringToExtNameSchemaFromHTTP:
+      type: object
+      properties:
+        remoteName:
+          "$ref": http://localhost:7965/components.openapi.name.yml#/components/schemas/Name
+    Inline2:
+      type: object
+      properties:
+        name:
+          type: string
+    Recursive:
+      required:
+        - directive
+      properties:
+        directive:
+          type: string
+          description: the name of the recursive shcema
+        args:
+          type: array
+          description: Recursive schema arguments
+          items:
+            type: string
+        block:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recursive"

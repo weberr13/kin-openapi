@@ -6,6 +6,15 @@ import (
 	"reflect"
 )
 
+// package global marshaling context.
+// This is required since the encoding uses multiple, independent ObjectEncoder instances
+// and there's no way to pass this context through.
+// This context contains the root component references and the current path depth
+// (see EncodeStructFieldsAndExtensions and setResultField below)
+//
+// This context is used in MarshalRef
+var marshalContext = newMarshalContext(map[interface{}]string{})
+
 // MarshalStrictStruct function:
 //   * Marshals struct fields, ignoring MarshalJSON() and fields without 'json' tag.
 //   * Correctly handles StrictStruct semantics.
@@ -15,6 +24,22 @@ func MarshalStrictStruct(value StrictStruct) ([]byte, error) {
 		return nil, err
 	}
 	return encoder.Bytes()
+}
+
+func SetMarshalContext(rootComponentRefPaths map[interface{}]string) {
+	marshalContext = newMarshalContext(rootComponentRefPaths)
+}
+
+type encodingContext struct {
+	path                  []string
+	rootComponentRefPaths map[interface{}]string
+}
+
+func newMarshalContext(rootComponentRefPaths map[interface{}]string) encodingContext {
+	return encodingContext{
+		path:                  []string{"#"},
+		rootComponentRefPaths: rootComponentRefPaths,
+	}
 }
 
 type ObjectEncoder struct {
@@ -93,11 +118,10 @@ iteration:
 				result[field.JSONName] = []byte("null")
 				continue
 			}
-			fieldData, err := v.MarshalJSON()
-			if err != nil {
-				return err
+			err2 := encoder.setResultField(v, result, field)
+			if err2 != nil {
+				return err2
 			}
-			result[field.JSONName] = fieldData
 			continue
 		}
 		switch fieldValue.Kind() {
@@ -151,12 +175,33 @@ iteration:
 
 		// No special treament is needed
 		// Use plain old "encoding/json".Marshal
-		fieldData, err := json.Marshal(fieldValue.Addr().Interface())
+		err := encoder.setResultField(fieldValue.Addr().Interface(), result, field)
 		if err != nil {
 			return err
 		}
-		result[field.JSONName] = fieldData
 	}
 
+	return nil
+}
+
+func (encoder *ObjectEncoder) setResultField(v interface{}, result map[string]json.RawMessage, field FieldInfo) error {
+	var fieldData []byte
+	var err error
+
+	// push new element to path
+	marshalContext.path = append(marshalContext.path, field.JSONName)
+	if jm, ok := v.(json.Marshaler); ok {
+		fieldData, err = jm.MarshalJSON()
+	} else {
+		fieldData, err = json.Marshal(v)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	result[field.JSONName] = fieldData
+	// pop last element from path
+	marshalContext.path = marshalContext.path[:len(marshalContext.path)-1]
 	return nil
 }
